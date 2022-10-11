@@ -1,0 +1,688 @@
+[
+  {
+    "id": "6932486a52c796d6",
+    "type": "tab",
+    "label": "OBS Status MQTT",
+    "disabled": false,
+    "info": "",
+    "env": []
+  },
+  {
+    "id": "bb8ba5d678344506",
+    "type": "mqtt out",
+    "z": "6932486a52c796d6",
+    "name": "OBS TOPIC",
+    "topic": "",
+    "qos": "0",
+    "retain": "true",
+    "respTopic": "",
+    "contentType": "",
+    "userProps": "",
+    "correl": "",
+    "expiry": "",
+    "broker": "2c814fd5907f7043",
+    "x": 530,
+    "y": 220,
+    "wires": []
+  },
+  {
+    "id": "3947175398498076",
+    "type": "function",
+    "z": "6932486a52c796d6",
+    "name": "Build Payload",
+    "func": "let action = \"streaming\"\n\nif (msg.payload.outputPath !== undefined) {\n    action = \"recording\";\n}\n\nmsg.topic = `stream/obs/${action}/sensor`;\n// let action_state = false;\n// switch ( msg.payload.outputState ) {\n//     case \"OBS_WEBSOCKET_OUTPUT_STARTED\":\n//     case \"OBS_WEBSOCKET_OUTPUT_STARTING\":\n//         action_state = true;\n//         break;\n//     case \"OBS_WEBSOCKET_OUTPUT_STOPPING\":\n//     case \"OBS_WEBSOCKET_OUTPUT_STOPPED\":\n//     default:\n//         action_state = false;\n//         break;\n// }\n\nlet payload = {\n  action: action,\n  state: msg.payload.outputActive\n};\n\nmsg.payload = payload;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 340,
+    "y": 220,
+    "wires": [
+      [
+        "bb8ba5d678344506"
+      ]
+    ]
+  },
+  {
+    "id": "d52f787b0b8a2827",
+    "type": "obs event",
+    "z": "6932486a52c796d6",
+    "name": "OBS Events",
+    "event": "StreamStateChanged,RecordStateChanged",
+    "obsInstance": "c4571a333c43bbbd",
+    "x": 130,
+    "y": 220,
+    "wires": [
+      [
+        "3947175398498076"
+      ]
+    ]
+  },
+  {
+    "id": "35ef7ac3d0eb6bd1",
+    "type": "obs connection status",
+    "z": "6932486a52c796d6",
+    "name": "OBS CONNECTION STATUS",
+    "obsInstance": "c4571a333c43bbbd",
+    "x": 190,
+    "y": 280,
+    "wires": [
+      [
+        "cdc99e9355a465b8"
+      ]
+    ]
+  },
+  {
+    "id": "cdc99e9355a465b8",
+    "type": "function",
+    "z": "6932486a52c796d6",
+    "name": "Build Payload",
+    "func": "let state = \"offline\";\n\nswitch (msg.payload) {\n    \n    case \"ConnectionOpened\":\n    case \"Identified\":\n        state = \"online\"\n        break;\n        \n    case \"AuthenticationFailure\":\n    case \"ConnectionClosed\":\n    default:\n\n        state = \"offline\";\n        break;\n    \n}\n\nmsg.payload = [\n{\n    topic: \"stream/obs/streaming/availability\",\n    state: state\n}, { \n    topic: \"stream/obs/recording/availability\",\n    state: state \n}];\n\n\nreturn msg;\n\n",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 460,
+    "y": 280,
+    "wires": [
+      [
+        "ef4cd2b8c8920989"
+      ]
+    ]
+  },
+  {
+    "id": "ef4cd2b8c8920989",
+    "type": "split",
+    "z": "6932486a52c796d6",
+    "name": "",
+    "splt": "\\n",
+    "spltType": "str",
+    "arraySplt": 1,
+    "arraySpltType": "len",
+    "stream": false,
+    "addname": "",
+    "x": 670,
+    "y": 280,
+    "wires": [
+      [
+        "e7a361b408314437",
+        "6817ce0ec5639199"
+      ]
+    ]
+  },
+  {
+    "id": "d4d40a4216c859ce",
+    "type": "inject",
+    "z": "6932486a52c796d6",
+    "name": "unknown",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "unknown",
+    "payloadType": "str",
+    "x": 280,
+    "y": 340,
+    "wires": [
+      [
+        "cdc99e9355a465b8"
+      ]
+    ]
+  },
+  {
+    "id": "e7a361b408314437",
+    "type": "function",
+    "z": "6932486a52c796d6",
+    "name": "Post Availability",
+    "func": "\nmsg.topic = msg.payload.topic;\nmsg.payload = {\n    state: msg.payload.state\n}\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 820,
+    "y": 280,
+    "wires": [
+      [
+        "2d624eaf343049cc"
+      ]
+    ]
+  },
+  {
+    "id": "2d624eaf343049cc",
+    "type": "mqtt out",
+    "z": "6932486a52c796d6",
+    "name": "OBS Availability",
+    "topic": "",
+    "qos": "0",
+    "retain": "true",
+    "respTopic": "",
+    "contentType": "",
+    "userProps": "",
+    "correl": "",
+    "expiry": "",
+    "broker": "2c814fd5907f7043",
+    "x": 1000,
+    "y": 280,
+    "wires": []
+  },
+  {
+    "id": "6817ce0ec5639199",
+    "type": "debug",
+    "z": "6932486a52c796d6",
+    "name": "OBS Availibility",
+    "active": false,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 820,
+    "y": 340,
+    "wires": []
+  },
+  {
+    "id": "ff3fefb6fb7c1e44",
+    "type": "inject",
+    "z": "6932486a52c796d6",
+    "name": "ConnectionOpened",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "ConnectionOpened",
+    "payloadType": "str",
+    "x": 250,
+    "y": 380,
+    "wires": [
+      [
+        "cdc99e9355a465b8"
+      ]
+    ]
+  },
+  {
+    "id": "f37cce10a1505ee6",
+    "type": "inject",
+    "z": "6932486a52c796d6",
+    "name": "Identified",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "Identified",
+    "payloadType": "str",
+    "x": 280,
+    "y": 420,
+    "wires": [
+      [
+        "cdc99e9355a465b8"
+      ]
+    ]
+  },
+  {
+    "id": "1766a12e5550e4e8",
+    "type": "inject",
+    "z": "6932486a52c796d6",
+    "name": "AuthenticationFailure",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "AuthenticationFailure",
+    "payloadType": "str",
+    "x": 240,
+    "y": 460,
+    "wires": [
+      [
+        "cdc99e9355a465b8"
+      ]
+    ]
+  },
+  {
+    "id": "83279ecb146de822",
+    "type": "inject",
+    "z": "6932486a52c796d6",
+    "name": "ConnectionClosed",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "ConnectionClosed",
+    "payloadType": "str",
+    "x": 250,
+    "y": 500,
+    "wires": [
+      [
+        "cdc99e9355a465b8"
+      ]
+    ]
+  },
+  {
+    "id": "cf05c7a50971aeff",
+    "type": "inject",
+    "z": "6932486a52c796d6",
+    "name": "Streaming OFF",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"outputActive\":false}",
+    "payloadType": "json",
+    "x": 120,
+    "y": 160,
+    "wires": [
+      [
+        "3947175398498076"
+      ]
+    ]
+  },
+  {
+    "id": "fefd694397bc4b7a",
+    "type": "inject",
+    "z": "6932486a52c796d6",
+    "name": "Streaming ON",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"outputActive\":true}",
+    "payloadType": "json",
+    "x": 130,
+    "y": 120,
+    "wires": [
+      [
+        "3947175398498076"
+      ]
+    ]
+  },
+  {
+    "id": "042a8a5fe72f5914",
+    "type": "inject",
+    "z": "6932486a52c796d6",
+    "name": "Recording OFF",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"outputPath\":\"c:/test/file.mkv\",\"outputActive\":false}",
+    "payloadType": "json",
+    "x": 120,
+    "y": 80,
+    "wires": [
+      [
+        "3947175398498076"
+      ]
+    ]
+  },
+  {
+    "id": "d6a2a89e6ef1b7a2",
+    "type": "inject",
+    "z": "6932486a52c796d6",
+    "name": "Recording ON",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"outputPath\":\"c:/test/file.mkv\",\"outputActive\":true}",
+    "payloadType": "json",
+    "x": 130,
+    "y": 40,
+    "wires": [
+      [
+        "3947175398498076"
+      ]
+    ]
+  },
+  {
+    "id": "4b93b8fde189b6f7",
+    "type": "obs request",
+    "z": "6932486a52c796d6",
+    "name": "",
+    "reqType": "GetSourceScreenshot",
+    "reqTypeType": "requestName",
+    "reqData": "payload",
+    "reqDataType": "msg",
+    "obsInstance": "c4571a333c43bbbd",
+    "x": 1420,
+    "y": 760,
+    "wires": [
+      [
+        "b455c1c373e8283d"
+      ],
+      [
+        "b455c1c373e8283d"
+      ]
+    ]
+  },
+  {
+    "id": "fa4276c5d59f2831",
+    "type": "debug",
+    "z": "6932486a52c796d6",
+    "name": "debug 4",
+    "active": false,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "false",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 1820,
+    "y": 880,
+    "wires": []
+  },
+  {
+    "id": "f719298c3fce75b1",
+    "type": "mqtt out",
+    "z": "6932486a52c796d6",
+    "name": "OBS PREVIEW TOPIC",
+    "topic": "",
+    "qos": "0",
+    "retain": "true",
+    "respTopic": "",
+    "contentType": "",
+    "userProps": "",
+    "correl": "",
+    "expiry": "",
+    "broker": "2c814fd5907f7043",
+    "x": 1850,
+    "y": 820,
+    "wires": []
+  },
+  {
+    "id": "b455c1c373e8283d",
+    "type": "function",
+    "z": "6932486a52c796d6",
+    "name": "Output Payload",
+    "func": "msg.topic = \"stream/obs/camera\";\nlet blank = \"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=\";\nif (msg.payload && msg.payload.imageData) {\n    msg.payload = msg.payload.imageData.replace(\"data:image/png;base64,\", \"\");\n} else {\n    msg.payload = blank;\n}\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1640,
+    "y": 820,
+    "wires": [
+      [
+        "f719298c3fce75b1",
+        "fa4276c5d59f2831"
+      ]
+    ]
+  },
+  {
+    "id": "7d9625e5ded33d5d",
+    "type": "obs connection status",
+    "z": "6932486a52c796d6",
+    "name": "OBS PREVIEW CONNECTION STATUS",
+    "obsInstance": "c4571a333c43bbbd",
+    "x": 220,
+    "y": 820,
+    "wires": [
+      [
+        "fb59c76d27dacad6"
+      ]
+    ]
+  },
+  {
+    "id": "4985db913d1e0319",
+    "type": "switch",
+    "z": "6932486a52c796d6",
+    "name": "",
+    "property": "payload.state",
+    "propertyType": "msg",
+    "rules": [
+      {
+        "t": "eq",
+        "v": "online",
+        "vt": "str"
+      },
+      {
+        "t": "eq",
+        "v": "offline",
+        "vt": "str"
+      }
+    ],
+    "checkall": "true",
+    "repair": false,
+    "outputs": 2,
+    "x": 1030,
+    "y": 820,
+    "wires": [
+      [
+        "bf4adced08893a82"
+      ],
+      [
+        "b455c1c373e8283d"
+      ]
+    ]
+  },
+  {
+    "id": "09dabe3bdbd9bc25",
+    "type": "function",
+    "z": "6932486a52c796d6",
+    "name": "Get State",
+    "func": "let state = \"offline\";\nlet reset = undefined;\nswitch (msg.payload) {\n    \n    case \"ConnectionOpened\":\n    case \"Identified\":\n        state = \"online\"\n        break;\n        \n    case \"AuthenticationFailure\":\n    case \"ConnectionClosed\":\n    default:\n\n        state = \"offline\";\n        reset = true;\n        break;\n    \n}\n\nmsg.payload = {\n    state: state\n};\n\n// if(reset) {\n//     msg.reset = reset;\n// }\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 680,
+    "y": 820,
+    "wires": [
+      [
+        "95a743e352421c37"
+      ]
+    ]
+  },
+  {
+    "id": "95a743e352421c37",
+    "type": "trigger",
+    "z": "6932486a52c796d6",
+    "name": "",
+    "op1": "",
+    "op2": "",
+    "op1type": "pay",
+    "op2type": "pay",
+    "duration": "-30",
+    "extend": false,
+    "overrideDelay": false,
+    "units": "min",
+    "reset": "",
+    "bytopic": "all",
+    "topic": "topic",
+    "outputs": 1,
+    "x": 870,
+    "y": 820,
+    "wires": [
+      [
+        "4985db913d1e0319"
+      ]
+    ]
+  },
+  {
+    "id": "3de2f939a7efc275",
+    "type": "inject",
+    "z": "6932486a52c796d6",
+    "name": "",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "ConnectionOpened",
+    "payloadType": "str",
+    "x": 510,
+    "y": 740,
+    "wires": [
+      [
+        "09dabe3bdbd9bc25"
+      ]
+    ]
+  },
+  {
+    "id": "26a43f8bf0f5b9bd",
+    "type": "inject",
+    "z": "6932486a52c796d6",
+    "name": "",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "ConnectionClosed",
+    "payloadType": "str",
+    "x": 510,
+    "y": 920,
+    "wires": [
+      [
+        "09dabe3bdbd9bc25"
+      ]
+    ]
+  },
+  {
+    "id": "fb59c76d27dacad6",
+    "type": "delay",
+    "z": "6932486a52c796d6",
+    "name": "",
+    "pauseType": "delay",
+    "timeout": "2",
+    "timeoutUnits": "seconds",
+    "rate": "1",
+    "nbRateUnits": "1",
+    "rateUnits": "second",
+    "randomFirst": "1",
+    "randomLast": "5",
+    "randomUnits": "seconds",
+    "drop": false,
+    "allowrate": false,
+    "outputs": 1,
+    "x": 500,
+    "y": 820,
+    "wires": [
+      [
+        "09dabe3bdbd9bc25"
+      ]
+    ]
+  },
+  {
+    "id": "bf4adced08893a82",
+    "type": "function",
+    "z": "6932486a52c796d6",
+    "name": "Request Payload",
+    "func": "msg.payload = {\n    \"sourceName\": \"${OBS_MAIN_SCENE}\",\n    \"imageFormat\":\"png\"\n}\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1190,
+    "y": 760,
+    "wires": [
+      [
+        "4b93b8fde189b6f7"
+      ]
+    ]
+  },
+  {
+    "id": "2c814fd5907f7043",
+    "type": "mqtt-broker",
+    "name": "MQTT BROKER",
+    "broker": "${MQTT_BROKER}",
+    "port": "1883",
+    "clientid": "",
+    "autoConnect": true,
+    "usetls": false,
+    "protocolVersion": "5",
+    "keepalive": "60",
+    "cleansession": true,
+    "birthTopic": "",
+    "birthQos": "0",
+    "birthPayload": "",
+    "birthMsg": {},
+    "closeTopic": "",
+    "closeQos": "0",
+    "closePayload": "",
+    "closeMsg": {},
+    "willTopic": "",
+    "willQos": "0",
+    "willPayload": "",
+    "willMsg": {},
+    "userProps": "",
+    "sessionExpiry": ""
+  },
+  {
+    "id": "c4571a333c43bbbd",
+    "type": "obs-instance",
+    "name": "OBS",
+    "host": "${OBS_HOST}",
+    "port": "4455"
+  }
+]
